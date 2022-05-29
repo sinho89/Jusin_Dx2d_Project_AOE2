@@ -1,0 +1,91 @@
+#pragma once
+#include "obj.h"
+#include "ObjMgr.h"
+class CSoldier :
+	public CObj
+{
+private:
+	const TEXINFO*	STDTex[30];
+	const TEXINFO*	WalkTex[60];
+	const TEXINFO*	ATTTex[50];
+	const TEXINFO*	DyingTex[50];
+	const TEXINFO*	DeathTex[25];
+	const TEXINFO* pSelectionLine;
+public:
+	virtual HRESULT	Initialize(void);
+	virtual int		Update(void);
+	virtual void	Render(void);
+	virtual void	Release(void);
+public:
+	void SoldierAttack(void);
+public:
+	CSoldier(void);
+	CSoldier(D3DXVECTOR3 _vPos, eUnitType _Type, ePlayerType _TeamType, BYTE _byDrawID)
+	{
+		m_tInfo.vPos = _vPos;
+		m_tInfo.m_eUnitType = _Type;
+		m_tInfo.m_ePlayerType = _TeamType;
+		m_tInfo.byDrawID = _byDrawID;
+		m_tInfo.m_eObjType = OT_UNIT;
+		m_tInfo.m_eGroundType = GT_GROUND;
+		m_tInfo.m_eUnitType = UT_SOLDIER;
+		m_tInfo.iGetResourceCount = 0;
+		m_tInfo.iWorkingIndex = 0;
+
+		m_tInfo.fAngle = 270.f;
+		m_tInfo.vDir = D3DXVECTOR3(0.f, 1.f, 0.f);
+		m_tInfo.vLook = D3DXVECTOR3(1.f, 0.f, 0.f);
+		m_tInfo.wstrObjKey = L"Soldier";
+		m_tInfo.byOriID = m_tInfo.byDrawID;
+		m_tInfo.m_eObjType = OT_UNIT;
+		m_tInfo.fSpeed = 35.f;
+		m_tInfo.bMove = true;
+
+		if(m_tInfo.m_ePlayerType == PT_PLAYER)
+		{
+			m_tInfo.m_eStateType = STATE_STD;
+		}
+		else if(m_tInfo.m_ePlayerType == PT_ENEMY)
+		{
+			m_tInfo.wstrObjKey = L"Enemy_Soldier";
+			m_tInfo.m_eStateType = STATE_STD;
+		}
+
+	};
+	CSoldier(D3DXVECTOR3 _vPos, D3DXVECTOR3 _vWayPos, eUnitType _Type, ePlayerType _TeamType, BYTE _byDrawID)
+	{
+		m_tInfo.vPos = _vPos;
+		m_tInfo.m_eUnitType = _Type;
+		m_tInfo.m_ePlayerType = _TeamType;
+		m_tInfo.byDrawID = _byDrawID;
+		m_tInfo.m_eObjType = OT_UNIT;
+		m_tInfo.m_eGroundType = GT_GROUND;
+		m_tInfo.m_eUnitType = UT_SOLDIER;
+		m_tInfo.iGetResourceCount = 0;
+		m_tInfo.iWorkingIndex = 0;
+
+		m_tInfo.fAngle = 270.f;
+		m_tInfo.vDir = D3DXVECTOR3(0.f, 1.f, 0.f);
+		m_tInfo.vLook = D3DXVECTOR3(1.f, 0.f, 0.f);
+		m_tInfo.wstrObjKey = L"Soldier";
+		m_tInfo.byOriID = m_tInfo.byDrawID;
+		m_tInfo.m_eObjType = OT_UNIT;
+		m_tInfo.fSpeed = 35.f;
+		m_tInfo.vGoalPos = _vWayPos;
+		m_tInfo.bMove = true;
+
+		if(m_tInfo.m_ePlayerType == PT_PLAYER)
+		{
+			list<CObj*>::iterator iter = CObjMgr::GetInstance()->GetObjList(L"MainUI", SORT_UI).begin();
+			(*iter)->GetInfo()->iFoodNum -= 150;
+			m_tInfo.m_eStateType = STATE_WALK;
+		}
+		else if(m_tInfo.m_ePlayerType == PT_ENEMY)
+		{
+			m_tInfo.wstrObjKey = L"Enemy_Soldier";
+			m_tInfo.m_eStateType = STATE_WALK;
+		}
+
+	};
+	virtual ~CSoldier(void);
+};

@@ -1,0 +1,303 @@
+#include "StdAfx.h"
+#include "DestroyShip.h"
+#include "TextureMgr.h"
+#include "CollisionMgr.h"
+#include "TImeMgr.h"
+#include "ObjMgr.h"
+#include "Factory.h"
+#include "Effect.h"
+#include "DestroyShipEffect.h"
+#include "SoundMgr.h"
+CDestroyShip::CDestroyShip(void)
+{
+}
+
+CDestroyShip::~CDestroyShip(void)
+{
+}
+HRESULT CDestroyShip::Initialize( void )
+{
+	for(int i = 0; i < 9; ++i)
+		STDTex[i] = CTextureMgr::GetInstance()->GetTexture(L"DestroyShip", L"STD", i);
+
+	for(int i = 0; i < 63; ++i)
+		BoomTex[i] = CTextureMgr::GetInstance()->GetTexture(L"DestroyShip", L"ATT", i);
+
+	if(m_tInfo.m_ePlayerType == PT_PLAYER)
+	{
+		for(int i = 0; i < 100; ++i)
+		{
+			SailTex[i] = CTextureMgr::GetInstance()->GetTexture(L"Ship", L"MoveVibe1", i);
+		}
+	}
+	else if(m_tInfo.m_ePlayerType == PT_ENEMY)
+	{
+		for(int i = 0; i < 100; ++i)
+		{
+			SailTex[i] = CTextureMgr::GetInstance()->GetTexture(L"Ship", L"MoveVibe2", i);
+		}
+	}
+
+	m_iTime = 0;
+	m_iSailTime = 0;
+	m_tInfo.bDeath = false;
+	m_tInfo.bView = false;
+	m_tInfo.fCollRange = 70.f;
+	m_tInfo.iSight = 350;
+	m_tInfo.iRange = 150;
+	m_tInfo.iBoomRange = 100;
+
+	m_tInfo.iHp = 50;
+	m_tInfo.iMaxHp = 50;
+	m_tInfo.iAtt = 300;
+	m_tInfo.iDef = 0;
+	m_tFrame = FRAME(0.f, 10.f, 20.f, 0.f);
+
+	pSelectionLine = CTextureMgr::GetInstance()->GetTexture(L"Select", L"Select", 1);
+	pProfilTex = CTextureMgr::GetInstance()->GetTexture(L"UnitIcon", L"UnitIcon", 39);
+
+	if(m_tInfo.m_ePlayerType == PT_PLAYER)
+		m_tInfo.bView = true;
+
+	m_tInfo.bBoom = false;
+
+	return S_OK;
+}
+
+int CDestroyShip::Update( void )
+{
+
+	if(m_tInfo.iHp <= 0)
+		m_tInfo.iHp = 50;
+
+	if(m_tInfo.bBoom == false)
+	{
+		if(m_tInfo.m_ePlayerType == PT_PLAYER)
+		{
+			CCollisionMgr::GetInstance()->TileSightCollision(this);
+			CObj* pTarget = CCollisionMgr::GetInstance()->UnitBattleFunc(this);
+
+			if(pTarget)
+			{
+				float fX = pTarget->GetInfo()->vPos.x - m_tInfo.vPos.x;
+				float fY = pTarget->GetInfo()->vPos.y - m_tInfo.vPos.y;
+
+				float fDest = sqrt(fX * fX + fY * fY);
+
+				if(fDest < m_tInfo.iBoomRange)
+				{
+					CObj::SetBoomShipDir();
+					m_tInfo.bBoom = true;
+
+					list<CObj*>::iterator iter = CObjMgr::GetInstance()->GetObjList(L"Unit", SORT_OBJECT).begin();
+					list<CObj*>::iterator iter_end = CObjMgr::GetInstance()->GetObjList(L"Unit", SORT_OBJECT).end();
+
+					for(; iter != iter_end; ++iter)
+					{
+						float fX = (*iter)->GetInfo()->vPos.x - m_tInfo.vPos.x;
+						float fY = (*iter)->GetInfo()->vPos.y - m_tInfo.vPos.y;
+						float fDest = sqrt(fX * fX + fY * fY);
+
+						if(fDest <200)
+						{
+							(*iter)->GetInfo()->iHp -= m_tInfo.iAtt;
+							CObjMgr::GetInstance()->AddObject(L"Boom5", SORT_NORMAL, CFactory<CDestroyShipEffect>::CreateObject((*iter)->GetInfo()->vPos));
+						}
+					}
+				}
+			}
+		}
+
+		else if(m_tInfo.m_ePlayerType == PT_ENEMY)
+		{
+			CObj* pTarget = CCollisionMgr::GetInstance()->UnitBattleFunc(this);
+
+			if(pTarget)
+			{
+				float fX = pTarget->GetInfo()->vPos.x - m_tInfo.vPos.x;
+				float fY = pTarget->GetInfo()->vPos.y - m_tInfo.vPos.y;
+				float fDest = sqrt(fX * fX + fY * fY);
+
+				m_tInfo.vDir = pTarget->GetInfo()->vPos - m_tInfo.vPos;
+				D3DXVec3Normalize(&m_tInfo.vDir, &m_tInfo.vDir);
+
+				m_tInfo.vPos += m_tInfo.vDir * m_tInfo.fSpeed * GETTIME;
+				SixteenDirCheckFunc(m_tInfo.vDir,  pTarget->GetInfo()->vPos);
+
+				if(fDest < m_tInfo.iBoomRange)
+				{
+					CObj::SetBoomShipDir();
+					m_tInfo.bBoom = true;
+
+					list<CObj*>::iterator iter = CObjMgr::GetInstance()->GetObjList(L"Unit", SORT_OBJECT).begin();
+					list<CObj*>::iterator iter_end = CObjMgr::GetInstance()->GetObjList(L"Unit", SORT_OBJECT).end();
+
+					for(; iter != iter_end; ++iter)
+					{
+						float fX = (*iter)->GetInfo()->vPos.x - m_tInfo.vPos.x;
+						float fY = (*iter)->GetInfo()->vPos.y - m_tInfo.vPos.y;
+						float fDest = sqrt(fX * fX + fY * fY);
+
+						if(fDest < 200)
+						{
+							if(m_tInfo.m_ePlayerType == PT_ENEMY)
+							{
+								if(CObj::m_bWarStart == false)
+									CSoundMgr::GetInstance()->WarStart(L"WarStart2.wav");
+
+								CObj::m_bWarStart = true;
+
+							}
+							(*iter)->GetInfo()->iHp -= 10000;
+							CObjMgr::GetInstance()->AddObject(L"Boom5", SORT_NORMAL, CFactory<CDestroyShipEffect>::CreateObject((*iter)->GetInfo()->vPos));
+						}
+					}
+				}
+			}
+			else
+			{
+				float fX = m_tInfo.vPos.x - m_tInfo.vGoalPos.x;
+				float fY = m_tInfo.vPos.y - m_tInfo.vGoalPos.y;
+				float fDest = sqrt(fX * fX + fY * fY);
+
+				if(fDest > 50)
+				{
+					m_tInfo.bMove = true;
+					m_tInfo.m_eStateType = STATE_WALK;
+				}	
+				CObj::SetTransShipDir();
+
+			}
+		}
+	}
+
+	
+	if(m_tInfo.bBoom)
+	{
+		m_tFrame.fFrame += m_tFrame.fCount * GETTIME;
+
+		if(m_tFrame.fFrame > m_tFrame.fMax - 1)
+		{
+			CSoundMgr::GetInstance()->DestroySound(L"DestroyShipAtt.wav");
+			m_tInfo.bAlive = false;
+			if(m_tInfo.bAlive == false)
+				return 0;
+			m_tFrame.fFrame = m_tFrame.fOriFrame;
+		}
+
+	}
+	else if(m_tInfo.bBoom == false)
+	{
+		if(m_tInfo.bMove == true)
+		{
+			CObj::MoveFunc();
+		}
+
+		if(m_iTime > 10)
+		{
+			m_iTime = 0;
+
+			if(m_tInfo.m_eStateType == STATE_WALK && m_tInfo.bView == true)
+				CObjMgr::GetInstance()->AddObject(L"Effect", SORT_MOVE_EFFECT, CFactory<CEffect>::CreateObject(m_tInfo.vPos, m_tInfo.m_eSixteenDirType));
+
+		}
+		++m_iTime;
+
+		m_tFrame.fFrame += m_tFrame.fCount * GETTIME;
+		if(m_tFrame.fFrame > m_tFrame.fMax)
+		{
+			m_tFrame.fFrame = m_tFrame.fOriFrame;
+		}
+
+
+		if(m_tInfo.m_ePlayerType == PT_ENEMY)
+		{
+			CCollisionMgr::GetInstance()->EnemySightCollisoin(this);
+		}
+
+	}
+	CObj::SetSixTeenMatrix();
+
+	return 0;
+}
+
+void CDestroyShip::Render( void )
+{
+	if(m_tInfo.bView == false)
+		return;
+
+	if(m_tInfo.bBoom)
+	{
+		if(BoomTex[int(m_tFrame.fFrame)] == NULL)
+			return;
+
+		int fX = int(BoomTex[int(m_tFrame.fFrame)]->ImgInfo.Width / 2.f);
+		int fY = int(BoomTex[int(m_tFrame.fFrame)]->ImgInfo.Height / 2.f);
+
+		CDevice::GetInstance()->GetSprite()->SetTransform(&m_tInfo.matWorld);
+
+		CDevice::GetInstance()->GetSprite()->Draw(BoomTex[int(m_tFrame.fFrame)]->pTexture, 
+			NULL,
+			&D3DXVECTOR3(fX, fY + 20, 0.f),
+			NULL,
+			D3DCOLOR_ARGB(255, 255, 255, 255));
+		return;
+	}
+	if(m_tInfo.bAlive == false || m_tInfo.bBoom == true)
+		return;
+
+	if(m_tInfo.iHp <= 0)
+		return;
+	if(m_tInfo.bBoom == false)
+	{
+		if(m_tInfo.bSelection == true)
+		{
+			if(pSelectionLine == NULL)
+				return;
+
+			int fX = pSelectionLine->ImgInfo.Width / 2.f;
+			int fY = pSelectionLine->ImgInfo.Height / 2.f - 15;
+
+			CDevice::GetInstance()->GetSprite()->SetTransform(&m_tInfo.matWorld);
+
+			CDevice::GetInstance()->GetSprite()->Draw(pSelectionLine->pTexture, 
+				NULL,
+				&D3DXVECTOR3(fX, fY, 0.f),
+				NULL,
+				D3DCOLOR_ARGB(255, 255, 255, 255));
+		}
+
+		if(STDTex[m_tInfo.byDrawID] == NULL)
+			return;
+		int fX = int(STDTex[m_tInfo.byDrawID]->ImgInfo.Width / 2.f);
+		int fY = int(STDTex[m_tInfo.byDrawID]->ImgInfo.Height / 2.f);
+
+		CDevice::GetInstance()->GetSprite()->SetTransform(&m_tInfo.matWorld);
+
+		CDevice::GetInstance()->GetSprite()->Draw(STDTex[m_tInfo.byDrawID]->pTexture, 
+			NULL,
+			&D3DXVECTOR3(fX, fY, 0.f),
+			NULL,
+			D3DCOLOR_ARGB(255, 255, 255, 255));
+
+
+		if(SailTex[int(m_tFrame.fFrame)] == NULL)
+			return;
+
+		fX = int(SailTex[int(m_tFrame.fFrame)]->ImgInfo.Width / 2.f);
+		fY = int(SailTex[int(m_tFrame.fFrame)]->ImgInfo.Height / 2.f);
+
+		CDevice::GetInstance()->GetSprite()->SetTransform(&m_tInfo.matWorld);
+
+		CDevice::GetInstance()->GetSprite()->Draw(SailTex[int(m_tFrame.fFrame)]->pTexture, 
+			NULL,
+			&D3DXVECTOR3(fX, fY + 50, 0.f),
+			NULL,
+			D3DCOLOR_ARGB(255, 255, 255, 255));
+	}
+}
+
+void CDestroyShip::Release()
+{
+
+}

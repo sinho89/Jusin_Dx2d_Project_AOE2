@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcproj", "{A5DE4C00-7FDD-4186-A6CE-12ED4F5D06C0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Headers", "Headers", "{ACB5A90D-C726-4A65-A9E1-48690D98789E}"
+	ProjectSection(SolutionItems) = preProject
+		Headers\Const.h = Headers\Const.h
+		Headers\Define.h = Headers\Define.h
+		Headers\Enum.h = Headers\Enum.h
+		Headers\Extern.h = Headers\Extern.h
+		Headers\Func.h = Headers\Func.h
+		Headers\Include.h = Headers\Include.h
+		Headers\Struct.h = Headers\Struct.h
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tool", "Tool\Tool.vcproj", "{83FF7CC8-BBB5-4AC7-BEF7-6EE40750DD3C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5DE4C00-7FDD-4186-A6CE-12ED4F5D06C0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A5DE4C00-7FDD-4186-A6CE-12ED4F5D06C0}.Debug|Win32.Build.0 = Debug|Win32
+		{A5DE4C00-7FDD-4186-A6CE-12ED4F5D06C0}.Release|Win32.ActiveCfg = Release|Win32
+		{A5DE4C00-7FDD-4186-A6CE-12ED4F5D06C0}.Release|Win32.Build.0 = Release|Win32
+		{83FF7CC8-BBB5-4AC7-BEF7-6EE40750DD3C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{83FF7CC8-BBB5-4AC7-BEF7-6EE40750DD3C}.Debug|Win32.Build.0 = Debug|Win32
+		{83FF7CC8-BBB5-4AC7-BEF7-6EE40750DD3C}.Release|Win32.ActiveCfg = Release|Win32
+		{83FF7CC8-BBB5-4AC7-BEF7-6EE40750DD3C}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
